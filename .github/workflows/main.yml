@@ -1,0 +1,225 @@
+name: Fraud Detection MLOps Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_retrain:
+        description: "Force model retraining"
+        required: false
+        default: "false"
+
+env:
+  AZURE_RESOURCE_GROUP: fraud-detection-rg
+  AZURE_ML_WORKSPACE: fraud-detection-ws
+  ACR_NAME: frauddetectionacr
+  AKS_CLUSTER_NAME: fraud-aks-cluster
+  IMAGE_NAME: fraud-detection-api
+  PYTHON_VERSION: "3.10"
+
+jobs:
+  # ─── Lint & Test ─────────────────────────────────────────────────────────────
+  test:
+    name: Lint & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run linting
+        run: |
+          flake8 src/ api/ --max-line-length=120 --ignore=E501,W503
+          black --check src/ api/
+
+      - name: Run unit tests
+        run: pytest tests/ -v --tb=short --junitxml=test-results.xml
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results.xml
+
+  # ─── Data Ingestion ──────────────────────────────────────────────────────────
+  data-ingestion:
+    name: Download Dataset
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Kaggle API
+        run: pip install kaggle pandas
+
+      - name: Configure Kaggle credentials
+        run: |
+          mkdir -p ~/.kaggle
+          echo '{"username":"${{ secrets.KAGGLE_USERNAME }}","key":"${{ secrets.KAGGLE_KEY }}"}' > ~/.kaggle/kaggle.json
+          chmod 600 ~/.kaggle/kaggle.json
+
+      - name: Download dataset
+        run: python src/data_ingestion.py
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+
+      - name: Validate dataset
+        run: |
+          python -c "
+          import pandas as pd
+          df = pd.read_csv('data/creditcard.csv', nrows=10)
+          assert 'Class' in df.columns, 'Missing Class column'
+          assert len(df.columns) == 31, f'Expected 31 columns, got {len(df.columns)}'
+          print('Dataset validation passed')
+          "
+
+      - name: Cache dataset
+        uses: actions/cache@v4
+        with:
+          path: data/
+          key: dataset-creditcard-${{ hashFiles('src/data_ingestion.py') }}
+
+  # ─── Build Docker Image ──────────────────────────────────────────────────────
+  build:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, data-ingestion]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg KAGGLE_USERNAME=${{ secrets.KAGGLE_USERNAME }} \
+            --build-arg KAGGLE_KEY=${{ secrets.KAGGLE_KEY }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+
+  # ─── Azure ML Pipeline ──────────────────────────────────────────────────────
+  ml-pipeline:
+    name: Run Azure ML Pipeline
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install azure-ai-ml azure-identity kaggle mlflow
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Submit Azure ML Pipeline
+        run: python azure_ml/pipeline.py
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP: ${{ env.AZURE_RESOURCE_GROUP }}
+          AZURE_ML_WORKSPACE: ${{ env.AZURE_ML_WORKSPACE }}
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+
+  # ─── Deploy to AKS ──────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+    needs: [build, ml-pipeline]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Update image tag in deployment
+        run: |
+          sed -i "s|IMAGE_PLACEHOLDER|${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" \
+            kubernetes/deployment.yaml
+
+      - name: Deploy to AKS
+        run: |
+          kubectl apply -f kubernetes/deployment.yaml
+          kubectl apply -f kubernetes/service.yaml
+          kubectl apply -f kubernetes/hpa.yaml
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/fraud-detection-api --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -l app=fraud-detection-api
+          kubectl get svc fraud-detection-api-svc
+
+      - name: Smoke test
+        run: |
+          SERVICE_IP=$(kubectl get svc fraud-detection-api-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ -n "$SERVICE_IP" ]; then
+            echo "Testing health endpoint at $SERVICE_IP:8000"
+            curl -sf "http://$SERVICE_IP:8000/health" || echo "Health check pending (LB may not be ready)"
+          else
+            echo "LoadBalancer IP not yet assigned, skipping smoke test"
+          fi

@@ -1,0 +1,95 @@
+# ============================================================================
+# Docker Compose: Full Fraud Detection Stack (Local Development)
+# ============================================================================
+version: "3.9"
+
+services:
+  # ─── Fraud Detection API ───────────────────────────────────────────────────
+  fraud-detection-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        KAGGLE_USERNAME: ${KAGGLE_USERNAME}
+        KAGGLE_KEY: ${KAGGLE_KEY}
+    container_name: fraud-detection-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_PATH=/app/artifacts/model.pkl
+      - SCALER_PATH=/app/artifacts/scaler.pkl
+      - PREDICTION_THRESHOLD=0.5
+      - API_PORT=8000
+      - API_WORKERS=2
+    volumes:
+      - ./artifacts:/app/artifacts:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - fraud-network
+
+  # ─── Prometheus ────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    restart: unless-stopped
+    networks:
+      - fraud-network
+
+  # ─── Grafana ───────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.3.1
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=FraudDetection2024!
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - ./monitoring/grafana/dashboard_provider.yml:/etc/grafana/provisioning/dashboards/dashboard_provider.yml:ro
+      - ./monitoring/grafana/dashboard.json:/var/lib/grafana/dashboards/fraud-detection.json:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - fraud-network
+
+  # ─── Node Exporter (Infrastructure Metrics) ────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+    networks:
+      - fraud-network
+
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  fraud-network:
+    driver: bridge

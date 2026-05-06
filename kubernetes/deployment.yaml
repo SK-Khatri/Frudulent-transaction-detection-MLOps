@@ -1,0 +1,132 @@
+# ============================================================================
+# Kubernetes Deployment: Fraud Detection API
+# ============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-detection-api
+  namespace: default
+  labels:
+    app: fraud-detection-api
+    version: v1
+    team: mlops
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fraud-detection-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: fraud-detection-api
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: fraud-detection-api
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          env:
+            - name: MODEL_PATH
+              value: "/app/artifacts/model.pkl"
+            - name: SCALER_PATH
+              value: "/app/artifacts/scaler.pkl"
+            - name: PREDICTION_THRESHOLD
+              value: "0.5"
+            - name: API_PORT
+              value: "8000"
+            - name: API_WORKERS
+              value: "4"
+            - name: KAGGLE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: kaggle-credentials
+                  key: username
+            - name: KAGGLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kaggle-credentials
+                  key: key
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12
+          volumeMounts:
+            - name: model-artifacts
+              mountPath: /app/artifacts
+              readOnly: true
+      volumes:
+        - name: model-artifacts
+          persistentVolumeClaim:
+            claimName: model-artifacts-pvc
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: acr-secret
+
+---
+# PVC for model artifacts
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-artifacts-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadOnlyMany
+  storageClassName: azurefile
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# Kaggle credentials secret (create via kubectl)
+# kubectl create secret generic kaggle-credentials \
+#   --from-literal=username=YOUR_KAGGLE_USERNAME \
+#   --from-literal=key=YOUR_KAGGLE_KEY
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kaggle-credentials
+  namespace: default
+type: Opaque
+stringData:
+  username: "REPLACE_WITH_KAGGLE_USERNAME"
+  key: "REPLACE_WITH_KAGGLE_KEY"

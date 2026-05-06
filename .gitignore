@@ -1,0 +1,71 @@
+# ============================================================================
+# .gitignore - Fraud Detection MLOps Project
+# ============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data (downloaded from Kaggle - do not commit)
+data/*.csv
+data/*.zip
+data/*.parquet
+
+# Model artifacts (generated during training)
+artifacts/
+*.pkl
+*.joblib
+*.h5
+*.onnx
+
+# Environment & secrets
+.env
+.env.local
+.env.production
+kaggle.json
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage & test
+.coverage
+htmlcov/
+.pytest_cache/
+test-results.xml
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Docker
+*.tar

@@ -1,0 +1,72 @@
+# ============================================================================
+# Project Configuration
+# ============================================================================
+
+project:
+  name: fraud-detection-mlops
+  version: "1.0.0"
+  description: "Credit Card Fraud Detection with MLOps on Azure ML"
+
+# ─── Data ────────────────────────────────────────────────────────────────────
+data:
+  kaggle_dataset: "mlg-ulb/creditcardfraud"
+  raw_data_dir: "data/"
+  csv_filename: "creditcard.csv"
+
+# ─── Preprocessing ──────────────────────────────────────────────────────────
+preprocessing:
+  test_size: 0.2
+  random_state: 42
+  apply_smote: true
+  smote_ratio: 0.5
+
+# ─── Model ───────────────────────────────────────────────────────────────────
+model:
+  type: "XGBClassifier"
+  params:
+    n_estimators: 300
+    max_depth: 6
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    min_child_weight: 5
+    gamma: 1
+    reg_alpha: 0.1
+    reg_lambda: 1.0
+    objective: "binary:logistic"
+    eval_metric: "aucpr"
+    random_state: 42
+
+# ─── Evaluation ──────────────────────────────────────────────────────────────
+evaluation:
+  threshold: 0.5
+  quality_gates:
+    min_roc_auc: 0.95
+    min_pr_auc: 0.70
+
+# ─── Azure ML ────────────────────────────────────────────────────────────────
+azure_ml:
+  compute_name: "fraud-compute-cluster"
+  compute_vm_size: "Standard_DS3_v2"
+  compute_min_nodes: 0
+  compute_max_nodes: 4
+  environment_name: "fraud-detection-env"
+  experiment_name: "fraud-detection-experiment"
+  model_name: "fraud-detection-model"
+
+# ─── API ─────────────────────────────────────────────────────────────────────
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  prediction_threshold: 0.5
+
+# ─── Deployment ──────────────────────────────────────────────────────────────
+deployment:
+  replicas: 3
+  min_replicas: 2
+  max_replicas: 10
+  cpu_request: "250m"
+  cpu_limit: "1000m"
+  memory_request: "512Mi"
+  memory_limit: "2Gi"

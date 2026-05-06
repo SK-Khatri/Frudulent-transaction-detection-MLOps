@@ -1,0 +1,2 @@
+# .gitkeep - ensures data directory is tracked by git
+# Actual data files are in .gitignore

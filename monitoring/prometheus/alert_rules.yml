@@ -1,0 +1,85 @@
+# ============================================================================
+# Prometheus Alert Rules for Fraud Detection
+# ============================================================================
+groups:
+  - name: fraud_detection_alerts
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(fraud_api_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(fraud_api_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: mlops
+        annotations:
+          summary: "High API error rate (>5%)"
+          description: "Fraud Detection API error rate is {{ $value | humanizePercentage }}."
+
+      # High latency
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(fraud_api_request_duration_seconds_bucket{endpoint="/predict"}[5m])) by (le)
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          team: mlops
+        annotations:
+          summary: "High prediction latency (p95 > 500ms)"
+          description: "95th percentile latency is {{ $value }}s."
+
+      # API down
+      - alert: APIDown
+        expr: up{job="fraud-detection-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: mlops
+        annotations:
+          summary: "Fraud Detection API is down"
+          description: "The API has been unreachable for more than 2 minutes."
+
+      # High fraud rate anomaly
+      - alert: AnomalousHighFraudRate
+        expr: |
+          (
+            sum(rate(fraud_predictions_total{result="fraud"}[15m]))
+            /
+            sum(rate(fraud_predictions_total[15m]))
+          ) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          team: mlops
+        annotations:
+          summary: "Anomalously high fraud detection rate (>10%)"
+          description: "Fraud rate is {{ $value | humanizePercentage }}. This may indicate model drift."
+
+      # Model not loaded
+      - alert: ModelNotLoaded
+        expr: fraud_model_loaded == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: mlops
+        annotations:
+          summary: "ML model is not loaded"
+          description: "The fraud detection model failed to load."
+
+      # Zero predictions (no traffic)
+      - alert: NoPredictions
+        expr: |
+          sum(rate(fraud_predictions_total[30m])) == 0
+        for: 30m
+        labels:
+          severity: warning
+          team: mlops
+        annotations:
+          summary: "No predictions in the last 30 minutes"
+          description: "The API has not received any prediction requests."

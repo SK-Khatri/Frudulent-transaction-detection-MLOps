@@ -1,0 +1,14 @@
+# Grafana dashboard provisioning
+apiVersion: 1
+
+providers:
+  - name: "Fraud Detection"
+    orgId: 1
+    folder: "MLOps"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
