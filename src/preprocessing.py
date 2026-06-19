@@ -7,7 +7,7 @@ for the credit card fraud detection pipeline.
 import logging
 import pickle
 from pathlib import Path
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Optional, Dict
 
 import numpy as np
 import pandas as pd
