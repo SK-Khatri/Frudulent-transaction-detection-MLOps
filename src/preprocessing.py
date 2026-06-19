@@ -193,7 +193,7 @@ if __name__ == "__main__":
     preprocessor.save_scaler()
 
     stats = preprocessor.get_stats(X_train, y_train)
-    print(f"\nPreprocessing complete:")
+    print("\nPreprocessing complete:")
     print(f"  Train shape: {X_train.shape}")
     print(f"  Test shape:  {X_test.shape}")
     print(f"  Fraud ratio (train): {stats['fraud_ratio']:.4%}")
