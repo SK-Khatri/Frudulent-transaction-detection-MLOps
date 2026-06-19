@@ -163,7 +163,7 @@ class FraudPreprocessor:
 
     def get_stats(
         self, X_train: np.ndarray, y_train: np.ndarray
-    ) -> Dict[str, Any]:
+    ) -> Dict[str]:
         """Return summary statistics for logging/monitoring."""
         return {
             "n_samples": len(X_train),
