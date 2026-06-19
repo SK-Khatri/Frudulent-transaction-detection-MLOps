@@ -1,0 +1,15 @@
+{
+  "roc_auc": 0.9832053636029537,
+  "average_precision": 0.8713632084250863,
+  "f1_score": 0.7713004484304933,
+  "precision": 0.688,
+  "recall": 0.8775510204081632,
+  "true_positives": 86,
+  "false_positives": 39,
+  "true_negatives": 56825,
+  "false_negatives": 12,
+  "threshold": 0.5,
+  "training_time_seconds": 18.091655731201172,
+  "n_test_samples": 56962,
+  "fraud_rate_test": 0.0017204452090867595
+}

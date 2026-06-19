@@ -1,0 +1,76 @@
+{
+  "standard_evaluation": {
+    "roc_auc": 0.9832053636029537,
+    "average_precision": 0.8713632084250863,
+    "f1_score": 0.7713004484304933,
+    "precision": 0.688,
+    "recall": 0.8775510204081632,
+    "confusion_matrix": {
+      "true_positives": 86,
+      "false_positives": 39,
+      "true_negatives": 56825,
+      "false_negatives": 12
+    },
+    "threshold": 0.5,
+    "total_samples": 56962,
+    "fraud_samples": 98,
+    "legit_samples": 56864
+  },
+  "optimal_thresholds": {
+    "f1": {
+      "threshold": 0.9199999999999996,
+      "score": 0.8526315789473684
+    },
+    "precision": {
+      "threshold": 0.9399999999999996,
+      "score": 0.8977272727272727
+    },
+    "recall": {
+      "threshold": 0.1,
+      "score": 0.8979591836734694
+    }
+  },
+  "operating_points": {
+    "high_precision": {
+      "threshold": 0.8,
+      "precision": 0.8,
+      "recall": 0.8571428571428571,
+      "f1": 0.8275862068965517,
+      "flagged_transactions": 105,
+      "flagged_ratio": 0.0018433341525929568
+    },
+    "balanced": {
+      "threshold": 0.5,
+      "precision": 0.688,
+      "recall": 0.8775510204081632,
+      "f1": 0.7713004484304933,
+      "flagged_transactions": 125,
+      "flagged_ratio": 0.00219444541975352
+    },
+    "high_recall": {
+      "threshold": 0.3,
+      "precision": 0.5641025641025641,
+      "recall": 0.8979591836734694,
+      "f1": 0.6929133858267716,
+      "flagged_transactions": 156,
+      "flagged_ratio": 0.002738667883852393
+    },
+    "max_recall": {
+      "threshold": 0.1,
+      "precision": 0.2371967654986523,
+      "recall": 0.8979591836734694,
+      "f1": 0.3752665245202559,
+      "flagged_transactions": 371,
+      "flagged_ratio": 0.006513114005828447
+    }
+  },
+  "quality_gate": {
+    "roc_auc_passed": true,
+    "pr_auc_passed": true,
+    "overall_passed": true,
+    "thresholds": {
+      "min_roc_auc": 0.95,
+      "min_pr_auc": 0.7
+    }
+  }
+}
