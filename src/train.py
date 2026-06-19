@@ -4,7 +4,6 @@ Trains an XGBoost classifier for fraud detection with hyperparameter tuning,
 experiment tracking via MLflow, and model artifact persistence.
 """
 
-import os
 import json
 import logging
 import pickle
