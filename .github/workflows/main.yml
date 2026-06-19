@@ -126,7 +126,9 @@ jobs:
 
       - name: Login to Azure Container Registry
         run: |
-          az acr login --name ${{ env.ACR_NAME }}
+          az acr login -n ${{env.ACR_NAME}} \
+            --username ${{env.ACR_NAME}} \
+            --password ${{secrets.ACR_password}}
 
       - name: Build Docker image
         run: |
