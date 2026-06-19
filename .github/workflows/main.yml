@@ -13,11 +13,11 @@ on:
         default: "false"
 
 env:
-  AZURE_RESOURCE_GROUP: fraud-detection-rg
-  AZURE_ML_WORKSPACE: fraud-detection-ws
-  ACR_NAME: frauddetectionacr
-  AKS_CLUSTER_NAME: fraud-aks-cluster
-  IMAGE_NAME: fraud-detection-api
+  AZURE_RESOURCE_GROUP: financial-fraud-detection-rg
+  AZURE_ML_WORKSPACE: financial-fraud-detection-ws
+  ACR_NAME: financialfrauddetectionacr
+  AKS_CLUSTER_NAME: financial-fraud-aks-cluster
+  IMAGE_NAME: financial-fraud-detection-api
   PYTHON_VERSION: "3.10"
 
 jobs:
