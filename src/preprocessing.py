@@ -7,7 +7,7 @@ for the credit card fraud detection pipeline.
 import logging
 import pickle
 from pathlib import Path
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Optional, Dict, Any
 
 import numpy as np
 import pandas as pd
@@ -163,7 +163,7 @@ class FraudPreprocessor:
 
     def get_stats(
         self, X_train: np.ndarray, y_train: np.ndarray
-    ) -> Dict[str]:
+    ) -> Dict[str, Any]:
         """Return summary statistics for logging/monitoring."""
         return {
             "n_samples": len(X_train),
