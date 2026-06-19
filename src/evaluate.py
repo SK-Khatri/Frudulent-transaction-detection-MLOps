@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 from sklearn.metrics import (
     roc_auc_score,
     average_precision_score,
@@ -19,8 +18,6 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     confusion_matrix,
-    precision_recall_curve,
-    roc_curve,
     classification_report,
 )
 
