@@ -128,7 +128,7 @@ jobs:
         run: |
           az acr login -n ${{env.ACR_NAME}} \
             --username ${{env.ACR_NAME}} \
-            --password ${{secrets.ACR_password}}
+            --password ${{secrets.ACR_PASSWORD}}
 
       - name: Build Docker image
         run: |
