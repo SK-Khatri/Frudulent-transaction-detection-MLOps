@@ -9,7 +9,7 @@ import time
 import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
-from typing import Dict, Any
+from typing import Dict
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
