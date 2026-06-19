@@ -8,7 +8,6 @@ import os
 import sys
 import json
 import zipfile
-import hashlib
 import logging
 from pathlib import Path
 from typing import Optional
