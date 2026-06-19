@@ -4,6 +4,7 @@ Production-ready REST API with Prometheus metrics integration.
 """
 
 import os
+import uvicorn
 import sys
 import time
 import logging
@@ -266,7 +267,6 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 if __name__ == "__main__":
-    import uvicorn
 
     uvicorn.run(
         "api.app:app",
