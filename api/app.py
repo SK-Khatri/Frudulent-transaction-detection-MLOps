@@ -24,10 +24,6 @@ from prometheus_client import (
 )
 from starlette.responses import Response
 
-# Add project root to path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
 from src.inference import FraudDetector
 from api.schemas import (
     TransactionInput,
@@ -38,6 +34,10 @@ from api.schemas import (
     HealthResponse,
     ModelInfoResponse,
 )
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 logging.basicConfig(
     level=logging.INFO,
