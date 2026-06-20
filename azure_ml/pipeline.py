@@ -136,7 +136,6 @@ def fraud_detection_pipeline(
     kaggle_key: str,
 ):
     """Define the complete ML pipeline using DSL."""
-    config = AzureMLConfig()
     env_name = f"{config.environment_name}:latest"
     compute = config.compute_name
 
@@ -200,7 +199,7 @@ def register_model(
 
 def submit_pipeline(config: AzureMLConfig = None) -> str:
     """Submit the pipeline for execution."""
-    config = config or AzureMLConfig()
+    config = AzureMLConfig()
     config.validate()
 
     ml_client = get_ml_client(config)
