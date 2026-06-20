@@ -138,13 +138,6 @@ jobs:
             -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest \
             .
-
-      - name: ACR Push Permission
-        run: |
-          az role assignment create \
-            --assignee ${{secrets.AZURE_CLIENTID}} \
-            --role AcrPush \
-            --scope ${{secrets.ACR_RESOURCE_ID}}
       
       - name: Push Docker image
         run: |
