@@ -136,9 +136,9 @@ def fraud_detection_pipeline(
     kaggle_key: str,
 ):
     """Define the complete ML pipeline using DSL."""
-    env_name = f"{config.environment_name}:latest"
-    compute = config.compute_name
-
+    env_name = "fraud-env:latest"
+    compute = "fraud-compute-cluster"
+    
     # Step 1: Data Ingestion
     ingest = create_data_ingestion_step(env_name, compute)(
         kaggle_username=kaggle_username,
