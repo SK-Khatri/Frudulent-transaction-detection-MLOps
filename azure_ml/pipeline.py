@@ -136,7 +136,7 @@ def fraud_detection_pipeline(
     kaggle_key: str,
 ):
     """Define the complete ML pipeline using DSL."""
-    env_name = "fraud-env:latest"
+    env_name = "azureml:AzureML-sklearn-1.0-ubuntu20.04-py38-cpu:latest"
     compute = "fraud-compute-cluster"
     
     # Step 1: Data Ingestion
