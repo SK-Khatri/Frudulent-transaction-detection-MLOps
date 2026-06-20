@@ -16,7 +16,7 @@ env:
   AZURE_RESOURCE_GROUP: financial-fraud-detection-rg
   AZURE_ML_WORKSPACE: financial-fraud-detection-ws
   ACR_NAME: financialfrauddetectioncr
-  AKS_CLUSTER_NAME: financial-fraud-aks-cluster
+  AKS_CLUSTER_NAME: financial-fraud-detection-aks-cluster
   IMAGE_NAME: financial-fraud-detection-api
   PYTHON_VERSION: "3.10"
 
