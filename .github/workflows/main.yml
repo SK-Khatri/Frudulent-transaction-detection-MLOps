@@ -125,10 +125,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to Azure Container Registry
-        run: |
-          az acr login -n ${{env.ACR_NAME}} \
-            --username ${{env.ACR_NAME}} \
-            --password ${{secrets.ACR_PASSWORD}}
+        run: az acr login -n ${{ env.ACR_NAME }}
 
       - name: Build Docker image
         run: |
