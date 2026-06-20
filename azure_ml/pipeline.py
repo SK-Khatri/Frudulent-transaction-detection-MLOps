@@ -136,8 +136,8 @@ def fraud_detection_pipeline(
     kaggle_key: str,
 ):
     """Define the complete ML pipeline using DSL."""
-    env_name = "azureml:AzureML-sklearn-1.0-ubuntu20.04-py38-cpu:latest"
     compute = "fraud-compute-cluster"
+    env_name = "fraud-env:1"
     
     # Step 1: Data Ingestion
     ingest = create_data_ingestion_step(env_name, compute)(
@@ -206,8 +206,17 @@ def submit_pipeline(config: AzureMLConfig = None) -> str:
 
     # Ensure infrastructure exists
     create_compute(ml_client, config)
-    create_environment(ml_client, config)
 
+    from azure.ai.ml.entities import Environment
+
+    env = Environment(
+        name="fraud-env",
+        version="1",
+        image="mcr.microsoft.com/azureml/minimal-ubuntu22.04-py310-cpu-inference:latest",
+    )
+
+    ml_client.environments.create_or_update(env)
+    
     # Build pipeline
     pipeline_job = fraud_detection_pipeline(
         kaggle_username=config.kaggle_username,
